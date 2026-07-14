@@ -70,11 +70,23 @@ def custom_css() -> str:
   --font-display: 'Space Grotesk', sans-serif;
 }}
 
+/* ── FORCE DARK BACKGROUND EVERYWHERE ────────────────── */
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] > div,
+[data-testid="stAppViewContainer"] > div > div,
+[data-testid="stHeader"],
+[data-testid="stSidebar"],
+[data-testid="stBottom"],
+[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"] {{
+  background-color: var(--bg-base) !important;
+}}
+
 /* ── Global Reset ─────────────────────────────────────── */
 * {{ box-sizing: border-box; }}
 
 .stApp {{
-  background: var(--bg-base);
+  background: var(--bg-base) !important;
   color: var(--text-primary);
   font-family: var(--font-main);
 }}
@@ -118,10 +130,9 @@ def custom_css() -> str:
   box-shadow: 0 8px 30px rgba(108, 99, 255, 0.5) !important;
 }}
 
-/* ── Inputs ───────────────────────────────────────────── */
+/* ── Inputs & Dropdowns ─────────────────────────────────── */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea,
-.stSelectbox > div > div > select,
 .stNumberInput > div > div > input {{
   background: var(--bg-hover) !important;
   border: 1px solid var(--border) !important;
@@ -133,6 +144,103 @@ def custom_css() -> str:
 .stTextArea > div > div > textarea:focus {{
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15) !important;
+}}
+
+/* ── FIX SELECTBOX / DROPDOWN WHITE BACKGROUND ───────── */
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] > div > div,
+div[data-baseweb="select"] > div > div > div,
+div[data-baseweb="select"] > div > div > div > div,
+div[data-baseweb="input"] > div,
+div[data-baseweb="input"] > div > div,
+div[data-baseweb="popover"] > div,
+div[data-baseweb="popover"] > div > div,
+div[data-baseweb="menu"] > div,
+div[data-baseweb="menu"] > div > div,
+.stSelectbox > div > div > div,
+.stMultiselect > div > div > div,
+.stSelectbox > div > div,
+.stMultiselect > div > div {{
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}}
+
+/* Dropdown menu items */
+div[data-baseweb="menu"] div[role="option"],
+div[data-baseweb="menu"] div[role="option"] > div {{
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}}
+div[data-baseweb="menu"] div[role="option"]:hover {{
+  background-color: var(--primary) !important;
+  color: #fff !important;
+}}
+
+/* ── FIX EXPANDER / DEMO CREDENTIALS WHITE BOX ───────── */
+.streamlit-expanderHeader,
+.streamlit-expanderContent,
+[data-testid="stExpander"] > div,
+[data-testid="stExpander"] > div > div {{
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+}}
+.streamlit-expanderHeader:hover {{
+  border-color: var(--primary) !important;
+}}
+
+/* ── FIX CODE BLOCKS INSIDE EXPANDERS ───────────────── */
+.stCodeBlock,
+.stCodeBlock > div,
+.stCodeBlock pre,
+.stCodeBlock code,
+[data-testid="stCodeBlock"] {{
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}}
+
+/* ── FIX FILE UPLOADER WHITE BOX ────────────────────── */
+[data-testid="stFileUploader"] > div,
+[data-testid="stFileUploader"] > section,
+[data-testid="stFileUploader"] > section > div {{
+  background: var(--bg-hover) !important;
+  border: 2px dashed var(--border-glow) !important;
+  border-radius: var(--radius-card) !important;
+  color: var(--text-primary) !important;
+}}
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] div {{ 
+  color: var(--text-primary) !important; 
+}}
+
+/* ── FIX DATAFRAME WHITE BACKGROUND ──────────────────── */
+[data-testid="stDataFrameContainer"],
+[data-testid="stDataFrameContainer"] > div,
+[data-testid="stDataFrameContainer"] > div > div,
+.stDataFrame,
+.stDataFrame > div,
+.stDataFrame > div > div {{
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}}
+[data-testid="stDataFrameContainer"] th {{
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}}
+[data-testid="stDataFrameContainer"] td {{
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}}
+
+/* ── FIX CHECKBOX ─────────────────────────────────────── */
+label[data-testid="stCheckbox"] > span,
+label[data-testid="stCheckbox"] > span > span {{
+  color: var(--text-primary) !important;
 }}
 
 /* ── Metrics ──────────────────────────────────────────── */
@@ -147,8 +255,15 @@ def custom_css() -> str:
 [data-testid="stMetricLabel"] > div {{ color: var(--text-secondary) !important; font-size: 0.78rem !important; text-transform: uppercase; letter-spacing: 0.08em; }}
 [data-testid="stMetricValue"] > div {{ color: var(--text-primary) !important; font-size: 1.6rem !important; font-weight: 700 !important; font-family: var(--font-display) !important; }}
 
-/* ── Tabs ─────────────────────────────────────────────── */
-.stTabs [data-baseweb="tab-list"] {{
+/* ── FIX TABS ─────────────────────────────────────────── */
+/* Version-agnostic: works on Streamlit 1.35 through 1.40+ */
+.stTabs {{
+  background: transparent !important;
+}}
+
+/* Tab list container */
+.stTabs [data-baseweb="tab-list"],
+.stTabs [role="tablist"] {{
   background: var(--bg-card) !important;
   border-radius: var(--radius-card) !important;
   padding: 6px !important;
@@ -156,7 +271,11 @@ def custom_css() -> str:
   border: 1px solid var(--border) !important;
   flex-wrap: wrap !important;
 }}
-.stTabs [data-baseweb="tab"] {{
+
+/* Individual tab button - covers all Streamlit versions */
+.stTabs button[data-baseweb="tab"],
+.stTabs [role="tab"],
+.stTabs button[role="tab"] {{
   border-radius: 10px !important;
   color: var(--text-secondary) !important;
   font-weight: 500 !important;
@@ -164,32 +283,48 @@ def custom_css() -> str:
   padding: 8px 14px !important;
   transition: all 0.2s !important;
   white-space: nowrap !important;
+  background: transparent !important;
+  border: none !important;
+  margin: 2px !important;
 }}
-.stTabs [aria-selected="true"] {{
+
+/* Hover state */
+.stTabs button[data-baseweb="tab"]:hover,
+.stTabs [role="tab"]:hover {{
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}}
+
+/* Active/selected tab - multiple selectors for compatibility */
+.stTabs button[data-baseweb="tab"][aria-selected="true"],
+.stTabs [role="tab"][aria-selected="true"],
+.stTabs button[aria-selected="true"] {{
   background: var(--gradient-1) !important;
   color: #fff !important;
   font-weight: 700 !important;
   box-shadow: 0 2px 12px rgba(108,99,255,0.4) !important;
 }}
 
-/* ── DataFrames ──────────────────────────────────────── */
-[data-testid="stDataFrameContainer"] {{
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-card) !important;
-  overflow: hidden !important;
+/* Streamlit 1.40+ uses a different inner structure */
+.stTabs button[data-baseweb="tab"] > div,
+.stTabs [role="tab"] > div {{
+  background: transparent !important;
+  color: inherit !important;
 }}
 
-/* ── Expander ─────────────────────────────────────────── */
-.streamlit-expanderHeader {{
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-card) !important;
-  color: var(--text-primary) !important;
-  font-weight: 600 !important;
+/* Ensure text inside tabs is white when active */
+.stTabs button[aria-selected="true"] p,
+.stTabs button[aria-selected="true"] span,
+.stTabs button[aria-selected="true"] div {{
+  color: #fff !important;
 }}
 
 /* ── Alerts ───────────────────────────────────────────── */
-.stAlert {{ border-radius: var(--radius-card) !important; }}
+.stAlert {{ 
+  border-radius: var(--radius-card) !important; 
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}}
 
 /* ── Sliders ──────────────────────────────────────────── */
 [data-testid="stSlider"] > div > div > div > div {{
@@ -200,20 +335,6 @@ def custom_css() -> str:
 .stProgress > div > div > div > div {{
   background: var(--gradient-1) !important;
 }}
-
-/* ── File uploader ────────────────────────────────────── */
-[data-testid="stFileUploader"] > div {{
-  background: var(--bg-hover) !important;
-  border: 2px dashed var(--border-glow) !important;
-  border-radius: var(--radius-card) !important;
-  color: var(--text-primary) !important;
-}}
-[data-testid="stFileUploader"] label,
-[data-testid="stFileUploader"] p,
-[data-testid="stFileUploader"] span {{ color: var(--text-primary) !important; }}
-
-/* ── Checkboxes ───────────────────────────────────────── */
-label[data-testid="stCheckbox"] > span {{ color: var(--text-primary) !important; }}
 
 /* ── Labels / markdown headings ──────────────────────── */
 h1, h2, h3, h4, h5, h6 {{ color: var(--text-primary) !important; font-family: var(--font-display) !important; }}
@@ -230,7 +351,6 @@ label {{ color: var(--text-secondary) !important; font-size: 0.83rem !important;
 .js-plotly-plot .plotly .bg {{ fill: transparent !important; }}
 </style>
 """
-
 # ─────────────────────────────────────────────────────────────
 # Component HTML snippets
 # ─────────────────────────────────────────────────────────────
