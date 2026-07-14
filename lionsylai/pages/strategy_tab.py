@@ -3,6 +3,7 @@ LionsylAI – Tab 4: Strategic Insights
 Auto-generated profitability, growth, risk, and roadmap recommendations.
 """
 from __future__ import annotations
+import math
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -164,26 +165,34 @@ def _profitability_insights(margin, total_rev, total_profit, cost_ratio):
     for ins, col in insights:
         st.markdown(insight_card(ins, col), unsafe_allow_html=True)
 
-    # Gauge chart
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
-        value=margin,
-        delta={"reference": 15, "valueformat": ".1f"},
-        title={"text": "Profit Margin %", "font": {"color": "#F0F2FF"}},
-        gauge={
-            "axis": {"range": [-10, 50], "tickcolor": "#6B7280"},
-            "bar": {"color": "#6C63FF"},
-            "steps": [
-                {"range": [-10, 5], "color": "#EF444422"},
-                {"range": [5, 15], "color": "#F59E0B22"},
-                {"range": [15, 50], "color": "#10B98122"},
-            ],
-            "threshold": {"line": {"color": "#0AEFFF", "width": 3}, "value": 15},
-        },
-        number={"suffix": "%", "font": {"color": "#F0F2FF"}},
-    ))
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#F0F2FF", height=280)
-    st.plotly_chart(fig, use_container_width=True)
+    # Gauge chart – bulletproof against NaN and invalid color formats
+    # Plotly's ColorValidator rejects 8-digit hex (#RRGGBBAA) in some versions;
+    # use 6-digit hex or rgba() instead.
+    safe_margin = 0.0 if (margin is None or math.isnan(margin)) else float(margin)
+
+    try:
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=safe_margin,
+            delta={"reference": 15, "valueformat": ".1f"},
+            title={"text": "Profit Margin %", "font": {"color": "#F0F2FF"}},
+            gauge={
+                "axis": {"range": [-10, 50], "tickcolor": "#6B7280"},
+                "bar": {"color": "#6C63FF"},
+                "steps": [
+                    {"range": [-10, 5], "color": "rgba(239,68,68,0.13)"},
+                    {"range": [5, 15], "color": "rgba(245,158,11,0.13)"},
+                    {"range": [15, 50], "color": "rgba(16,185,129,0.13)"},
+                ],
+                "threshold": {"line": {"color": "#0AEFFF", "width": 3}, "value": 15},
+            },
+            number={"suffix": "%", "font": {"color": "#F0F2FF"}},
+        ))
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#F0F2FF", height=280)
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.warning(f"Gauge chart could not render: {e}")
+        st.metric("Profit Margin", f"{safe_margin:.1f}%", delta=f"{safe_margin - 15:.1f}%")
 
 
 # ─────────────────────────────────────────────────────────────
