@@ -225,16 +225,41 @@ def _display_report(reports, df, acol, charts):
 def _budget_analysis(df: pd.DataFrame):
     st.markdown("### 💰 Budget vs Actual Analysis")
 
-    # Init budget
+    # ── Safe budget initialiser ─────────────────────────────
+    def _fresh_budget():
+        """Return a guaranteed-valid dict budget structure."""
+        try:
+            if df is not None:
+                init = budget_from_dataframe(df)
+                if isinstance(init, dict):
+                    return init
+        except Exception:
+            pass
+        try:
+            if isinstance(DEFAULT_BUDGET, dict):
+                return DEFAULT_BUDGET.copy()
+        except Exception:
+            pass
+        return {
+            "total_budget": 1_000_000.0,
+            "fiscal_year": 2026,
+            "currency": "USD",
+            "departments": {},
+        }
+
+    # If the key is missing, create it
     if "budget_data" not in st.session_state:
-        st.session_state["budget_data"] = (
-            budget_from_dataframe(df) if df is not None else DEFAULT_BUDGET.copy()
-        )
+        st.session_state["budget_data"] = _fresh_budget()
+
     bd = st.session_state["budget_data"]
 
+    # CRITICAL: If session_state holds a corrupted/non-dict value (e.g. from a
+    # previous bug, or budget_from_dataframe returned None/DataFrame), reset it.
+    if not isinstance(bd, dict):
+        st.session_state["budget_data"] = _fresh_budget()
+        bd = st.session_state["budget_data"]
+
     # ── DEFENSIVE NORMALIZATION ─────────────────────────────
-    # budget_from_dataframe or JSON-loaded budgets may return strings,
-    # None, or nested objects. Coerce every numeric field to Python float.
     def _safe_float(val, default=0.0):
         try:
             return float(val) if val is not None else default
@@ -245,7 +270,16 @@ def _budget_analysis(df: pd.DataFrame):
     bd["fiscal_year"]  = int(_safe_float(bd.get("fiscal_year"), 2026))
     bd["currency"]     = str(bd.get("currency", "USD"))
 
-    for dept, data in bd.get("departments", {}).items():
+    # Ensure departments is a dict
+    depts = bd.get("departments")
+    if not isinstance(depts, dict):
+        bd["departments"] = {}
+        depts = {}
+
+    for dept, data in list(depts.items()):
+        if not isinstance(data, dict):
+            depts[dept] = {}
+            data = depts[dept]
         data["allocation"] = _safe_float(data.get("allocation"), 0.0)
         data["budget"]     = _safe_float(data.get("budget"), 0.0)
         data["actual"]     = _safe_float(data.get("actual"), 0.0)
@@ -281,7 +315,7 @@ def _budget_analysis(df: pd.DataFrame):
                 st.rerun()
         with bcol2:
             if st.button("🔄 Reset", use_container_width=True):
-                st.session_state["budget_data"] = DEFAULT_BUDGET.copy()
+                st.session_state["budget_data"] = _fresh_budget()
                 st.rerun()
 
         if st.button("💾 Save Budget", type="primary", use_container_width=True):
