@@ -66,23 +66,20 @@ def render(df: pd.DataFrame):
     if rev_col and cost_col:
         c1, c2 = st.columns(2)
         with c1:
-            fig = px.scatter(df, x=rev_col, y=cost_col,
-                             title="Revenue vs Cost",
-                             trendline="ols",
-                             color_discrete_sequence=["#6C63FF"],
-                             opacity=0.65)
+            # Defensive: isolate only the two columns Plotly needs
+            # Narwhals (used by trendline="ols") rejects duplicate column names
+            plot_df = df[[rev_col, cost_col]].copy()
+            fig = px.scatter(
+                plot_df,
+                x=rev_col,
+                y=cost_col,
+                title="Revenue vs Cost",
+                trendline="ols",
+                color_discrete_sequence=["#6C63FF"],
+                opacity=0.65
+            )
             fig.update_layout(**_cl(), height=360)
             st.plotly_chart(fig, use_container_width=True)
-        with c2:
-            if len(prof_s) > 0:
-                mean_p = prof_s.mean()
-                fig = px.histogram(prof_s, nbins=35,
-                                   title="Profit Distribution",
-                                   color_discrete_sequence=["#10B981"], opacity=0.85)
-                fig.add_vline(x=mean_p, line_dash="dash", line_color="#F59E0B",
-                              annotation_text=f"Mean ${mean_p:,.0f}")
-                fig.update_layout(**_cl(), height=360)
-                st.plotly_chart(fig, use_container_width=True)
 
     # ── Category performance ──────────────────────────────────
     if ccols and rev_col:
