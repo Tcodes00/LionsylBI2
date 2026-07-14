@@ -19,7 +19,10 @@ def render(df: pd.DataFrame):
         "Reconciliation · Financial statements · Close checklist"
     ), unsafe_allow_html=True)
 
-    active_df = st.session_state.get("consolidated_df", df)
+    # CRITICAL: session_state may hold None even if key exists
+    active_df = st.session_state.get("consolidated_df")
+    if active_df is None:
+        active_df = df
 
     t1, t2, t3 = st.tabs(["🔍 Reconciliation", "📊 Financial Statements", "✅ Close Checklist"])
 
@@ -34,6 +37,11 @@ def render(df: pd.DataFrame):
 
 def _reconciliation(df: pd.DataFrame):
     st.markdown("### 🔍 Account Reconciliation")
+
+    if df is None or df.empty:
+        st.info("No data available. Upload a dataset or consolidate sources first.")
+        return
+
     ncols = numeric_cols(df)
 
     if len(ncols) < 2:
@@ -73,9 +81,9 @@ def _reconciliation(df: pd.DataFrame):
                     "axis": {"range": [0, 100], "tickcolor":"#6B7280"},
                     "bar": {"color": "#10B981" if match_pct > 95 else "#F59E0B"},
                     "steps": [
-                        {"range":[0,80],  "color":"#EF444422"},
-                        {"range":[80,95], "color":"#F59E0B22"},
-                        {"range":[95,100],"color":"#10B98122"},
+                        {"range":[0,80],  "color":"rgba(239,68,68,0.13)"},
+                        {"range":[80,95], "color":"rgba(245,158,11,0.13)"},
+                        {"range":[95,100],"color":"rgba(16,185,129,0.13)"},
                     ],
                     "threshold": {"line":{"color":"#0AEFFF","width":3},"value":95},
                 },
@@ -114,6 +122,11 @@ def _reconciliation(df: pd.DataFrame):
 
 def _financial_statements(df: pd.DataFrame):
     st.markdown("### 📊 Financial Statements")
+
+    if df is None or df.empty:
+        st.info("No data available. Upload a dataset or consolidate sources first.")
+        return
+
     ncols = numeric_cols(df)
 
     if not ncols:
