@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import Optional, Dict, List, Any, Tuple
+from typing import Optional, Dict, List, Any
 
 import numpy as np
 import pandas as pd
@@ -103,13 +103,20 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     unnamed = [c for c in df.columns if str(c).startswith("Unnamed")]
     df.drop(columns=unnamed, inplace=True, errors="ignore")
 
-    # 3. Deduplicate column names
+    # 3. Strip whitespace from column names
+    df.columns = df.columns.astype(str).str.strip()
+
+    # 4. Deduplicate column names (case-sensitive first pass)
     df.columns = _dedup_cols(df.columns)
 
-    # 4. Drop duplicate rows
+    # 5. Case-insensitive duplicate guard
+    # Prevents "Revenue" and "revenue" from coexisting (Narwhals is strict)
+    df.columns = _dedup_cols_case_insensitive(df.columns)
+
+    # 6. Drop duplicate rows
     df.drop_duplicates(inplace=True)
 
-    # 5. Parse dates
+    # 7. Parse dates
     for col in df.columns:
         if any(kw in col.lower() for kw in ["date", "time", "month", "year", "period", "timestamp"]):
             try:
@@ -117,7 +124,7 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             except Exception:
                 pass
 
-    # 6. Fill missing values
+    # 8. Fill missing values
     for col in df.columns:
         if pd.api.types.is_numeric_dtype(df[col]):
             median = df[col].median()
@@ -135,16 +142,34 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _dedup_cols(cols) -> List[str]:
+    """Deduplicate column names. First occurrence keeps original name;
+    duplicates get _1, _2, etc. appended."""
     seen: Dict[str, int] = {}
     out = []
     for c in cols:
-        c = str(c)
-        if c in seen:
-            seen[c] += 1
-            out.append(f"{c}_{seen[c]}")
-        else:
-            seen[c] = 0
+        c = str(c).strip()
+        count = seen.get(c, 0)
+        if count == 0:
             out.append(c)
+        else:
+            out.append(f"{c}_{count}")
+        seen[c] = count + 1
+    return out
+
+
+def _dedup_cols_case_insensitive(cols) -> List[str]:
+    """Second-pass deduplication: case-insensitive check.
+    If 'Revenue' exists and 'revenue' appears later, rename to 'revenue_1'."""
+    seen_lower: Dict[str, int] = {}
+    out = []
+    for c in cols:
+        key = str(c).lower().strip()
+        count = seen_lower.get(key, 0)
+        if count == 0:
+            out.append(c)
+        else:
+            out.append(f"{c}_{count}")
+        seen_lower[key] = count + 1
     return out
 
 
