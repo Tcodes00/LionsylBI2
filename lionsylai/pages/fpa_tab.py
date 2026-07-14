@@ -232,11 +232,29 @@ def _budget_analysis(df: pd.DataFrame):
         )
     bd = st.session_state["budget_data"]
 
+    # ── DEFENSIVE NORMALIZATION ─────────────────────────────
+    # budget_from_dataframe or JSON-loaded budgets may return strings,
+    # None, or nested objects. Coerce every numeric field to Python float.
+    def _safe_float(val, default=0.0):
+        try:
+            return float(val) if val is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    bd["total_budget"] = _safe_float(bd.get("total_budget"), 1_000_000.0)
+    bd["fiscal_year"]  = int(_safe_float(bd.get("fiscal_year"), 2026))
+    bd["currency"]     = str(bd.get("currency", "USD"))
+
+    for dept, data in bd.get("departments", {}).items():
+        data["allocation"] = _safe_float(data.get("allocation"), 0.0)
+        data["budget"]     = _safe_float(data.get("budget"), 0.0)
+        data["actual"]     = _safe_float(data.get("actual"), 0.0)
+
     # ── Config panel ─────────────────────────────────────────
     c1, c2 = st.columns([2, 1])
     with c2:
         st.markdown("#### ⚙️ Global Settings")
-        new_total = st.number_input("Total Budget ($)", value=float(bd["total_budget"]),
+        new_total = st.number_input("Total Budget ($)", value=bd["total_budget"],
                                     step=50_000.0, format="%.0f", key="bd_total")
         fy = st.selectbox("Fiscal Year", [2024,2025,2026,2027],
                           index=[2024,2025,2026,2027].index(bd.get("fiscal_year",2026)),
