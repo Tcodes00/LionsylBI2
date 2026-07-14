@@ -63,27 +63,42 @@ def render(df: pd.DataFrame):
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
     # ── Charts row 1 ─────────────────────────────────────────
-    if rev_col and cost_col:
+    if rev_col and cost_col and rev_col != cost_col:
         c1, c2 = st.columns(2)
         with c1:
-            # Defensive: Narwhals (used by Plotly's trendline="ols") is strict
-            # about duplicate column names. Pass only the two columns we need.
-            plot_df = pd.DataFrame({
-                rev_col: pd.to_numeric(df[rev_col], errors="coerce"),
-                cost_col: pd.to_numeric(df[cost_col], errors="coerce")
-            }).dropna()
+            # BULLETPROOF: Narwhals (used by trendline="ols") is extremely strict
+            # about duplicate column names. We must:
+            # 1. Extract by position (not by name) to avoid duplicate-col ambiguity
+            # 2. Use generic column names for the plot DataFrame
+            # 3. Drop nulls before Plotly sees the data
+            try:
+                rev_idx = list(df.columns).index(rev_col)
+                cost_idx = list(df.columns).index(cost_col)
 
-            fig = px.scatter(
-                plot_df,
-                x=rev_col,
-                y=cost_col,
-                title="Revenue vs Cost",
-                trendline="ols",
-                color_discrete_sequence=["#6C63FF"],
-                opacity=0.65
-            )
-            fig.update_layout(**_cl(), height=360)
-            st.plotly_chart(fig, use_container_width=True)
+                plot_df = pd.DataFrame({
+                    "x": pd.to_numeric(df.iloc[:, rev_idx], errors="coerce"),
+                    "y": pd.to_numeric(df.iloc[:, cost_idx], errors="coerce")
+                }).dropna()
+
+                # Final guard: if somehow we still have duplicates, force unique names
+                if plot_df.columns.duplicated().any():
+                    plot_df.columns = [f"{c}_{i}" for i, c in enumerate(plot_df.columns)]
+
+                fig = px.scatter(
+                    plot_df,
+                    x="x",
+                    y="y",
+                    title="Revenue vs Cost",
+                    trendline="ols",
+                    color_discrete_sequence=["#6C63FF"],
+                    opacity=0.65,
+                    labels={"x": rev_col, "y": cost_col}
+                )
+                fig.update_layout(**_cl(), height=360)
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.warning(f"Scatter plot error: {e}")
+
         with c2:
             if len(prof_s) > 0:
                 mean_p = prof_s.mean()
